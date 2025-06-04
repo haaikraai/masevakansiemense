@@ -1,0 +1,1 @@
+Ya fuckit im just gonna chuck all om main.py for mow
