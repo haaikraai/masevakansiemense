@@ -4,4 +4,12 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "holidays>=0.74",
+    "pandas>=2.3.0",
+]
+
+[dependency-groups]
+dev = [
+    "rich>=14.0.0",
+]
