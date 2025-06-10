@@ -20,7 +20,8 @@ Use sets. check methods hopefully got subtraction stuff
 <!-- IDIOT, should be a set. READ THE INSTRUCTIONS -->
 3. All holiday days for the year/area of proposed vacation. Call it holiday_dates.
 (Yes, you may use the library and explore it's features all ADD pointlessly doing so much nothing. For 2hours max man.  )
-4. Compare if there were any holidays in vacation days:
- - Get all weekends in date range.
- - Get all public holidays in date range
- - Subtract the set of these two, or rather, no that is correct
+4. Get all weekends in date range.
+5. Get all public holidays in date range
+6. Subtract the set of these two, or rather, no that is correct. Get actual leave days used
+<br>
+7. 
