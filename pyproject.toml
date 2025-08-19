@@ -6,10 +6,11 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "holidays>=0.74",
-    "pandas>=2.3.0",
+    "pyside6>=6.9.1",
 ]
 
 [dependency-groups]
 dev = [
+    "cutie>=0.3.2",
     "rich>=14.0.0",
 ]

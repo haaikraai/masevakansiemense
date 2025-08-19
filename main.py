@@ -1,70 +1,104 @@
 import os
-import datetime
-import time
-from datetime import datetime, date, timedelta
-import dateutil as datediff
-import calendar
-from pandas import date_range
-import pandas
-
-from rich.pretty import pprint as pp
-from rich import print
+from datetime import date, timedelta
+from dataclasses import dataclass
 import holidays
-# import holidays.countries
+from functools import cache
 
-# holdies = holidays.SA()
 
-holy_holies = holidays.country_holidays('ZA')
+@dataclass(frozen=True)
+class DateRange:
+    """
+    Represents a range of dates, from a start date to an end date (inclusive).
+    """
+    start_date: date
+    end_date: date
+    holies = holidays.country_holidays('SouthAfrica')
+    weekends: set[int]| None
+    # def __post_init__(self, weekends: set[int]|None = {5,6}):
+    #     print('running post init mewthod')
+    #     if not weekends:
+    #         self.weekends = {5,6}
+    #     else:
+    #         self.weekends = weekends
 
-holy_holies.weekends = {1,4,5,6}
 
-class VacationRange:
-    def __init__(self):
-        self.start_date: date
-        self.end_date: date
-        self.daterange: list[date]
-        self.actual_leave_days: list[date]
-
-class EmployeeLeave:
-    def __init__(self):
-        self.startDate: date
-        self.allowed_anual_leave: int
-        self.total_leave_received: int
-        self.vacations: list[VacationRange]
-
+    @property
+    @cache
+    def dates(self) -> list[date]:
+        """
+        Returns a list with all the dates from start_date to end_date.
+        The result is calculated on the first access and cached for subsequent calls.
+        """
+        date_list: list[date] = []
+        current_date = self.start_date
+        while current_date <= self.end_date:
+            date_list.append(current_date)
+            current_date += timedelta(days=1)
+        return date_list
     
+    @property
+    @cache
+    def nr_of_days(self) -> int:
+        """
+        Returns the number of days in the date range.
+        Note the +1 because normal people count with dates inclusive.
+        """
+        return (self.end_date - self.start_date).days + 1
 
-# 1. Get test vacation range date range. Call it vacation_dates.
-def get_vacation_range(start: date, end: date) -> list[date]:
-    '''
-    Using a list rather than proposed set, because sets do not support subscription.
-    Will change to set for arithmetic.
-    Ideally, should be a class containing both...hmm
-    '''
-    daterange = list()
+    @property
+    def nr_of_working_days(self) -> int:
+        '''
+        The actual days leave will be taken in a requested date range.
+        This returns all the days which do not fall on a public holiday, weekend or any such burdens to this industrialistic civilization
+        '''
+        # breakpoint()
+        actual_working_days = [day for day in self.dates if self.holies.is_working_day(day)]
+        
+        return len(actual_working_days)
+
+
+    @property
+    def weekends(self) -> set[int]:
+        return self.holies.weekend
+
+    @weekends.setter
+    def weekends(self, new_weekends: set[int]):
+        self.holies.weekend = new_weekends
+        
+
+class Employee:
+    def __init__(self, name: str, starting_date: date, anual_leave: int):
+        self.name = name
+        self.starting_date = starting_date
+        self.anual_leave = anual_leave
+        self.vacations: list[DateRange] = []
+        self.weekends = {5,6}
+        
+    @property
+    def months_employed(self) -> int:
+        months = ((date.today().year - 1) - (self.starting_date.year + 1))*12 + date.today().month + (12-self.starting_date.month)
+        return(months)
     
-    # note here the +1. normal people count with dates inclusive
-    for day in range((end-start).days+1):
-        daterange.append(start+timedelta(days=day))
+    @property
+    def total_leave_acrued(self) -> int:
+        days = self.months_employed*(self.anual_leave/12)
+        return days
     
-    return daterange
+    @property
+    def leave_days_remaining(self) -> int:
+        days = self.total_leave_acrued - self.leave_days_taken
+        return days
 
-def get_actual_leave_days(daterange: list[date]) -> list[date]:
-    actual_days = [day for day in daterange if not holy_holies.is_working_day(day)]
-    return actual_days
+    @property
+    def leave_days_taken(self) -> int:
+        days = 0
+        for vacation in self.vacations:
+            days += vacation.nr_of_working_days
+        return days
 
-def total_leave_accrued(start_date: date, annual_leave: int) -> int:
-    '''
-    Get the leave an employee has right NOW, base on the date of starting to work and the leave given per year.
+    def add_vaccation(self, start: date, end: date) -> int:
+        
+        vacation = DateRange(start_date=start, end_date=end, weekends=frozenset(self.weekends))
+        self.vacations.append(vacation)
 
-    This method (tobe, not in a class yet) works in montly units. Therefore, it converts anual leave to montly leave (anual_leave/12) and also automatically conciders pro-rate leave days for partially worked years.
-    '''
-    monthly_leave = annual_leave/12
-    
-    employed_range = (date.today().year - 1) - (start_date().year + 1)*12 + date.today().month + start_date.month()
 
-beginday = date(2024,5,26)
-endday = date(2024,6,20)
-vacation_range = get_vacation_range(beginday,endday)
-print(vacation_range)
-print(get_actual_leave_days(vacation_range))

@@ -1,0 +1,100 @@
+import os
+import datetime
+import time
+from datetime import datetime, date, timedelta
+import calendar
+from dataclasses import dataclass
+from rich.pretty import pprint as pp
+from rich import print
+import holidays
+from functools import cache
+
+@dataclass
+class DateRange(holidays):
+    '''
+    Declare a range of dates for use in date-arithmatic. Start and end datess are inclusive in the range.
+    Holds a date range with additional information and methods
+    Extra information includes the number of days, number of working days, number of weekends, number of public holidays, etc.
+
+    These details are calculated utilizing the holidays package with South AFrica as chosen country. The holidays package is modified to define a 4-weekend week. To use this more generic, define a different holidays or inheret the holidays package or whatever something it's a you-problem. I informed you of the "whatchout"
+    '''
+
+    # customizable holiday package parameters. Also introduces some standard defaults for the specific company
+    zar_holidays = holidays.country_holidays('SouthAfrica')
+    weekends = {1,4,5,6}
+    holiday_calendar = holidays.country_holidays('ZA')
+    start_date: date
+    end_date: date
+    
+    def __init__(self,start_date,end_date):
+        self.start_date: date = start_date
+        self.end_date: date = end_date
+
+    @property
+    @cache
+    def dates(self) -> list[date]:
+        '''
+        Using a list rather than proposed set, because sets do not support subscription.
+        Will change to set for arithmetic.
+        Ideally, should be a class containing both...hmm
+        '''
+        daterange = list()
+        
+        # note here the +1. normal people count with dates inclusive
+        for day in range((self.end_date-self.start_date).days+1):
+            daterange.append(self.start_date+timedelta(days=day))
+        
+        return daterange
+    
+    @property
+    @cache
+    def actual_leave_days(self) -> list[date]:
+        '''
+        The actual days leave will be taken in a requested date range.
+        This returns all the days which do not fall on a public holiday, weekend or any such burdens to this industrialistic civilization
+        '''
+
+        daterange = self.dates
+        actual_working_days = [day for day in daterange if self.holiday_calendar.is_working_day(day)]
+
+        return list(set(daterange).difference(actual_working_days))
+        
+
+
+
+
+class EmployeeLeave:
+    def __init__(self):
+        self.startDate: date
+        self.allowed_anual_leave: int
+        self.vacations: list[DateRange]
+
+
+class Employee:
+    def __init__(self, name = 'Jannie van die Bosveld', employment_date = date(1977,1,1), allowed_annual_leave = 15, weekends = {4,5,6}):
+        self.name: str = name
+        self.employment_date: date = date
+        self.allowed_anual_leave: int = allowed_annual_leave
+        self.weekends: set[int] = {1,4,5,6}
+        self.holiday_calendar = holidays.country_holidays('ZA')
+        self.vacations: list[DateRange] = []
+
+    def add_vacation(self, start_date: date, end_date: date):
+        self.vacations.append(DateRange(start_date,end_date))
+
+
+
+    def total_leave_accrued(self, start_date: date, annual_leave: int) -> int:
+        '''
+        Get the leave an employee has right NOW, base on the date of starting to work and the leave given per year.
+
+        This method (tobe, not in a class yet) works in montly units. Therefore, it converts anual leave to montly leave (anual_leave/12) and also automatically conciders pro-rate leave days for partially worked years.
+        '''
+        monthly_leave = annual_leave/12
+
+        employed_range = (date.today().year - 1) - (start_date().year + 1)*12 + date.today().month + (12-start_date.month())
+
+        return monthly_leave*employed_range
+
+
+

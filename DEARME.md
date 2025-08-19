@@ -25,3 +25,6 @@ Use sets. check methods hopefully got subtraction stuff
 6. Subtract the set of these two, or rather, no that is correct. Get actual leave days used
 <br>
 7. 
+
+
+WHERE AM I???
